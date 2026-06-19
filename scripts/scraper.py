@@ -6,14 +6,14 @@ from concurrent.futures import ThreadPoolExecutor
 
 # Sources for MTProto proxies
 SOURCES = [
-    "https://raw.githubusercontent.com/SoliSpirit/mtproto/master/proxies.txt",
-    "https://raw.githubusercontent.com/hookzof/socks5_list/master/tg.txt",
-    "https://raw.githubusercontent.com/claudio-p/mtproto-proxy-list/main/proxy.txt"
+    "https://raw.githubusercontent.com/Grim1313/mtproto-for-telegram/master/all_proxies.txt",
+    "https://raw.githubusercontent.com/ALIILAPRO/MTProtoProxy/main/mtproto.txt",
+    "https://raw.githubusercontent.com/Argh94/Proxy-List/master/mtproto.txt"
 ]
 
 def fetch_proxies(url):
     try:
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, timeout=15)
         if response.status_code == 200:
             # Extract tg://proxy or https://t.me/proxy links
             proxies = re.findall(r'(?:tg://proxy\?|https://t\.me/proxy\?)[^\s\n"\'<>]+', response.text)
@@ -25,19 +25,16 @@ def fetch_proxies(url):
     return []
 
 def verify_proxy(proxy_url):
-    # Simple check for connectivity (in a real scenario, this would involve a more robust MTProto ping)
-    # For now, we'll just parse the parameters and return them if they seem valid
     try:
         params = dict(re.findall(r'(\w+)=([^&]+)', proxy_url))
         if 'server' in params and 'port' in params and 'secret' in params:
-            # Simulate a verification step (replace with actual connectivity test if possible)
             return {
                 "url": proxy_url,
                 "server": params['server'],
                 "port": params['port'],
                 "secret": params['secret'],
                 "verified": True,
-                "latency": "N/A" # Placeholder
+                "latency": "N/A"
             }
     except Exception as e:
         print(f"Error verifying {proxy_url}: {e}")
@@ -52,19 +49,23 @@ def main():
     # Remove duplicates
     unique_proxies = list(set(all_raw_proxies))
     print(f"Found {len(unique_proxies)} unique proxies.")
+    
+    if not unique_proxies:
+        print("No proxies found. Check your sources.")
+        return
 
     verified_proxies = []
     with ThreadPoolExecutor(max_workers=10) as executor:
         results = list(executor.map(verify_proxy, unique_proxies))
         verified_proxies = [r for r in results if r is not None]
-
+    
     print(f"Verified {len(verified_proxies)} proxies.")
-
+    
     # Save to proxies.txt
     with open("proxies.txt", "w") as f:
         for proxy in verified_proxies:
             f.write(proxy['url'] + "\n")
-
+            
     # Save to proxies.json for the web interface
     with open("proxies.json", "w") as f:
         json.dump(verified_proxies, f, indent=4)
