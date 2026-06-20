@@ -9,7 +9,7 @@ jobs:
   update:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write # Ye line sabse zaroori hai
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
